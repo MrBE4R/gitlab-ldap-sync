@@ -105,7 +105,7 @@ if __name__ == "__main__":
             for l_group in ldap_groups:
                 print('Working on group %s ...' % l_group['name'])
                 if l_group['name'] not in gitlab_groups_names:
-                    print('\tGroup not existing in GitLab, creating.')
+                    print('|- Group not existing in GitLab, creating.')
                     g = gl.groups.create({'name': l_group['name'], 'path': l_group['name']})
                     g.save()
                 else:
@@ -121,7 +121,29 @@ if __name__ == "__main__":
                             g.members.create({'user_id': u.id, 'access_level': gitlab.DEVELOPER_ACCESS})
                             g.save()
                         else:
-                            print('|  |- User %s does not exist in gitlab, skipping.' % l_member['name'])
+                            print('|  |- User %s does not exist in gitlab, creating.' % l_member['name'])
+                            try:
+                                u = gl.users.create({
+                                    'email': l_member['email']
+                                    'name': l_member['name'],
+                                    'username': l_member['username'],
+                                    'extern_uid': l_member['identities'],
+                                    'provider': config['gitlab']['ldap_provider'],
+                                    'password': 'pouetpouet'
+                                })
+                            except gitlab.exceptions.GitlabCreateError as e:
+                                print(e.__dict__)
+                                if e.response_code == '409':
+                                    u = gl.users.create({
+                                        'email': l_member['email'].replace('@', '+gl-%s@' % l_member['username']),
+                                        'name': l_member['name'],
+                                        'username': l_member['username'],
+                                        'extern_uid': l_member['identities'],
+                                        'provider': config['gitlab']['ldap_provider'],
+                                        'password': 'pouetpouet'
+                                    })
+                            g.members.create({'user_id': u.id, 'access_level': gitlab.DEVELOPER_ACCESS})
+                            g.save()
                     else:
                         print('|  |- User %s already in gitlab group, skipping.' % l_member['name'])
                 print('Done.')
