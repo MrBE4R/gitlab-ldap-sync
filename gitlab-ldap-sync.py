@@ -109,21 +109,21 @@ if __name__ == "__main__":
                     g = gl.groups.create({'name': l_group['name'], 'path': l_group['name']})
                     g.save()
                 else:
-                    print('\tGroup already exist in GitLab, skiping creation.')
+                    print('|- Group already exist in GitLab, skiping creation.')
 
-                print('\tWorking on group\'s members.')
+                print('|- Working on group\'s members.')
                 for l_member in l_group['members']:
                     if l_member not in gitlab_groups[gitlab_groups_names.index(l_group['name'])]['members']:
-                        print('\t\tUser %s is member in LDAP but not in GitLab, updating GitLab.' % l_member['name'])
+                        print('|  |- User %s is member in LDAP but not in GitLab, updating GitLab.' % l_member['name'])
                         g = gl.groups.list(search=l_group['name'])[0]
                         u = gl.users.list(search=l_member['username'])[0]
                         if u is not None:
                             g.members.create({'user_id': u.id, 'access_level': gitlab.DEVELOPER_ACCESS})
                             g.save()
                         else:
-                            print('\t\tUser %s does not exist in gitlab, skipping.' % l_member['name'])
+                            print('|  |- User %s does not exist in gitlab, skipping.' % l_member['name'])
                     else:
-                        print('\t\tUser %s already in gitlab group, skipping.' % l_member['name'])
+                        print('|  |- User %s already in gitlab group, skipping.' % l_member['name'])
                 print('Done.')
 
             print('Done.')
@@ -133,22 +133,24 @@ if __name__ == "__main__":
             for g_group in gitlab_groups:
                 print('Working on group %s ...' % g_group['name'])
                 if g_group['name'] in ldap_groups_names:
-                    print('\tWorking on group\'s members.')
+                    print('|- Working on group\'s members.')
                     for g_member in g_group['members']:
                         if g_member not in ldap_groups[ldap_groups_names.index(g_group['name'])]['members']:
                             if str(config['ldap']['users_base_dn']).lower() not in g_member['identities']:
-                                print('\t\tNot a LDAP user, skipping.')
+                                print('|  |- Not a LDAP user, skipping.')
                             else:
-                                print('\t\tUser %s no longer in LDAP Group, removing.' % g_member['name'])
+                                print('|  |- User %s no longer in LDAP Group, removing.' % g_member['name'])
                                 g = gl.groups.list(search=g_group['name'])[0]
                                 u = gl.users.list(search=g_member['username'])[0]
                                 if u is not None:
                                     g.members.delete(u.id)
                                     g.save()
                         else:
-                            print('\t\tUser %s still in LDAP Group, skipping.' % g_member['name'])
+                            print('|  |- User %s still in LDAP Group, skipping.' % g_member['name'])
+                    print('|- Done.')
                 else:
-                    print('\tNot a LDAP group, skipping.')
+                    print('|- Not a LDAP group, skipping.')
+                print('Done')
         else:
             print('GitLab API is empty, aborting.')
             sys.exit(1)
