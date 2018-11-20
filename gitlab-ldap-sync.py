@@ -124,7 +124,7 @@ if __name__ == "__main__":
                             print('|  |- User %s does not exist in gitlab, creating.' % l_member['name'])
                             try:
                                 u = gl.users.create({
-                                    'email': l_member['email']
+                                    'email': l_member['email'],
                                     'name': l_member['name'],
                                     'username': l_member['username'],
                                     'extern_uid': l_member['identities'],
