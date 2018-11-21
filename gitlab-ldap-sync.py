@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import gitlab
@@ -40,7 +40,7 @@ if __name__ == "__main__":
                 sys.exit(1)
 
             try:
-                l = ldap.initialize(uri=config['ldap']['url'], bytes_mode=False)
+                l = ldap.initialize(uri=config['ldap']['url'])
                 l.simple_bind_s(config['ldap']['bind_dn'], config['ldap']['password'])
             except:
                 print('Error while connecting')
@@ -51,10 +51,10 @@ if __name__ == "__main__":
             print('Getting all groups from GitLab.')
             gitlab_groups = []
             gitlab_groups_names = []
-            for group in gl.groups.list():
+            for group in gl.groups.list(all=True):
                 gitlab_groups_names.append(group.full_name)
                 gitlab_group = {"name": group.full_name, "members": []}
-                for member in group.members.list():
+                for member in group.members.list(all=True):
                     user = gl.users.get(member.id)
                     gitlab_group['members'].append({
                         'username': user.username,
@@ -71,28 +71,27 @@ if __name__ == "__main__":
             ldap_groups_names = []
             for group_dn, group_data in l.search_s(base=config['ldap']['groups_base_dn'],
                                                    scope=ldap.SCOPE_SUBTREE,
-                                                   filterstr=u'(objectClass=group)',
-                                                   attrlist=[u'name', u'member']):
-                ldap_groups_names.append(group_data['name'][0])
-                ldap_group = {"name": group_data['name'][0], "members": []}
+                                                   filterstr='(objectClass=group)',
+                                                   attrlist=['name', 'member']):
+                ldap_groups_names.append(group_data['name'][0].decode())
+                ldap_group = {"name": group_data['name'][0].decode(), "members": []}
                 if 'member' in group_data:
                     for member in group_data['member']:
+                        member = member.decode()
                         for user_dn, user_data in l.search_s(base=config['ldap']['users_base_dn'],
                                                              scope=ldap.SCOPE_SUBTREE,
-                                                             filterstr=u'(&(|(distinguishedName=%s)(dn=%s))(objectClass=user))' % (
-                                                                     member,
-                                                                     member),
-                                                             attrlist=[u'uid', u'sAMAccountName', u'mail',
-                                                                       u'displayName']):
+                                                             filterstr='(&(|(distinguishedName=%s)(dn=%s))(objectClass=user))' % (
+                                                             member, member),
+                                                             attrlist=['uid', 'sAMAccountName', 'mail', 'displayName']):
                             if 'sAMAccountName' in user_data:
-                                username = user_data['sAMAccountName'][0]
+                                username = user_data['sAMAccountName'][0].decode()
                             else:
-                                username = user_data['uid'][0]
+                                username = user_data['uid'][0].decode()
                             ldap_group['members'].append({
                                 'username': username,
-                                'name': user_data['displayName'][0],
+                                'name': user_data['displayName'][0].decode(),
                                 'identities': str(member).lower(),
-                                'email': user_data['mail'][0]
+                                'email': user_data['mail'][0].decode()
                             })
                 ldap_groups.append(ldap_group)
             print('Done.')
@@ -116,34 +115,39 @@ if __name__ == "__main__":
                     if l_member not in gitlab_groups[gitlab_groups_names.index(l_group['name'])]['members']:
                         print('|  |- User %s is member in LDAP but not in GitLab, updating GitLab.' % l_member['name'])
                         g = gl.groups.list(search=l_group['name'])[0]
-                        u = gl.users.list(search=l_member['username'])[0]
-                        if u is not None:
-                            g.members.create({'user_id': u.id, 'access_level': gitlab.DEVELOPER_ACCESS})
+                        g.save()
+                        u = gl.users.list(search=l_member['username'])
+                        if len(u) > 0:
+                            u = u[0]
+                            if u not in g.members.list(all=True):
+                                g.members.create({'user_id': u.id, 'access_level': gitlab.DEVELOPER_ACCESS})
                             g.save()
                         else:
-                            print('|  |- User %s does not exist in gitlab, creating.' % l_member['name'])
-                            try:
-                                u = gl.users.create({
-                                    'email': l_member['email'],
-                                    'name': l_member['name'],
-                                    'username': l_member['username'],
-                                    'extern_uid': l_member['identities'],
-                                    'provider': config['gitlab']['ldap_provider'],
-                                    'password': 'pouetpouet'
-                                })
-                            except gitlab.exceptions.GitlabCreateError as e:
-                                print(e.__dict__)
-                                if e.response_code == '409':
+                            if config['gitlab']['create_user']:
+                                print('|  |- User %s does not exist in gitlab, creating.' % l_member['name'])
+                                try:
                                     u = gl.users.create({
-                                        'email': l_member['email'].replace('@', '+gl-%s@' % l_member['username']),
+                                        'email': l_member['email'],
                                         'name': l_member['name'],
                                         'username': l_member['username'],
                                         'extern_uid': l_member['identities'],
                                         'provider': config['gitlab']['ldap_provider'],
                                         'password': 'pouetpouet'
                                     })
-                            g.members.create({'user_id': u.id, 'access_level': gitlab.DEVELOPER_ACCESS})
-                            g.save()
+                                except gitlab.exceptions as e:
+                                    if e.response_code == '409':
+                                        u = gl.users.create({
+                                            'email': l_member['email'].replace('@', '+gl-%s@' % l_member['username']),
+                                            'name': l_member['name'],
+                                            'username': l_member['username'],
+                                            'extern_uid': l_member['identities'],
+                                            'provider': config['gitlab']['ldap_provider'],
+                                            'password': 'pouetpouet'
+                                        })
+                                g.members.create({'user_id': u.id, 'access_level': gitlab.DEVELOPER_ACCESS})
+                                g.save()
+                            else:
+                                print('|  |- User %s does not exist in gitlab, skipping.' % l_member['name'])
                     else:
                         print('|  |- User %s already in gitlab group, skipping.' % l_member['name'])
                 print('Done.')

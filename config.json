@@ -5,7 +5,8 @@
     "api": "",
     "private_token": "",
     "oauth_token": "",
-    "ldap_provider":""
+    "ldap_provider":"",
+    "create_user": true
   },
   "ldap": {
     "url": "",
