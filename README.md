@@ -117,7 +117,7 @@ Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c6
 
 ## Authors
 
-* **Jean-François GUILLAUME (Jeff MrBear)** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
+* **Jean-François GUILLAUME (Jeff MrBear)** - *Initial work* - [MrBE4R](https://github.com/MrBE4R)
 
 See also the list of [contributors](https://github.com/MrBE4R/gitlab-ldap-sync/contributors) who participated in this project.
 
