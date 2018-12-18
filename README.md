@@ -73,25 +73,25 @@ You could add the script in a cron to run it periodically.
 ## Deployment
 
 How to configure config.json
-```json
+```json5
 {
-  "syncInterval": "10m",                              # Actually not using it for now
-  "log": "/tmp/gitlab-ldap-sync.log",                 # Actually not using it for now
+  "syncInterval": "10m",                              // Actually not using it for now
+  "log": "/tmp/gitlab-ldap-sync.log",                 // Actually not using it for now
   "gitlab": {
-    "api": "https://gitlab.example.com",              # Url of your GitLab 
-    "private_token": "xxxxxxxxxxxxxxxxxxxx",          # Token generated in GitLab for an user with admin access
+    "api": "https://gitlab.example.com",              // Url of your GitLab 
+    "private_token": "xxxxxxxxxxxxxxxxxxxx",          // Token generated in GitLab for an user with admin access
     "oauth_token": "",
-    "ldap_provider":"",                               # Name of your LDAP provider in gitlab.yml
-    "create_user": true                               # Should the script create the user in GitLab
+    "ldap_provider":"",                               // Name of your LDAP provider in gitlab.yml
+    "create_user": true                               // Should the script create the user in GitLab
   },
   "ldap": {
-    "url": "ldaps://ldap.loc",                        # URL to your ldap / active directory
-    "users_base_dn": "ou=users,dc=example,dc=com",    # Where we should look for users
-    "groups_base_dn": "ou=groupss,dc=example,dc=com", # Where we should look for groups
-    "bind_dn": "login",                               # User to log with
-    "password": "password",                           # Password of the user
-    "group_attribute": "",                            # Actually not using it for now
-    "group_prefix": ""                                # Actually not using it for now
+    "url": "ldaps://ldap.loc",                        // URL to your ldap / active directory
+    "users_base_dn": "ou=users,dc=example,dc=com",    // Where we should look for users
+    "groups_base_dn": "ou=groupss,dc=example,dc=com", // Where we should look for groups
+    "bind_dn": "login",                               // User to log with
+    "password": "password",                           // Password of the user
+    "group_attribute": "",                            // Actually not using it for now
+    "group_prefix": ""                                // Actually not using it for now
   }
 }
 ```
