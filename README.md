@@ -47,6 +47,8 @@ You should get something like this :
 ```bash
 Initializing gitlab-ldap-sync.
 Done.
+Updating logger configuration
+Done.
 Connecting to GitLab
 Done.
 Connecting to LDAP
@@ -75,8 +77,8 @@ You could add the script in a cron to run it periodically.
 How to configure config.json
 ```json5
 {
-  "syncInterval": "10m",                              // Actually not using it for now
-  "log": "/tmp/gitlab-ldap-sync.log",                 // Actually not using it for now
+  "log": "/tmp/gitlab-ldap-sync.log",                 // Where to store the log file. If not set, will log to stdout
+  "log_level": "INFO",                                // The log level
   "gitlab": {
     "api": "https://gitlab.example.com",              // Url of your GitLab 
     "private_token": "xxxxxxxxxxxxxxxxxxxx",          // Token generated in GitLab for an user with admin access
@@ -90,8 +92,8 @@ How to configure config.json
     "groups_base_dn": "ou=groupss,dc=example,dc=com", // Where we should look for groups
     "bind_dn": "login",                               // User to log with
     "password": "password",                           // Password of the user
-    "group_attribute": "",                            // Actually not using it for now
-    "group_prefix": ""                                // Actually not using it for now
+    "group_attribute": "",                            // The attribute to search in LDAP. The value must be gitlab_sync
+    "group_prefix": ""                                // The prefix of the groups that should be synced
   }
 }
 ```
@@ -100,11 +102,11 @@ You should use ```private_token``` or ```oauth_token``` but not both. Check [the
 ```create_user``` If set to true, the script will create the users in gitlab and add them in the corresponding groups. Be aware that gitlab will send a mail to every new users created.
 ## TODO
 
-* Use async search to avoid errors with large LDAP
-* Maybe implement sync interval directly in the script to avoid using cron or systemd
-* Use a true logging solution (no more silly print statements)
-* Implement ```group_attribute``` and ```group_prefix``` to allow the selection of the groups to sync (avoid syncing every groups into gitlab)
-* your suggestions
+- [ ] Use async search to avoid errors with large LDAP
+- [ ]  Maybe implement sync interval directly in the script to avoid using cron or systemd
+- [x]  Use a true logging solution (no more silly print statements)
+- [x]  Implement ```group_attribute``` and ```group_prefix``` to allow the selection of the groups to sync (avoid syncing every groups into gitlab)
+- [ ]  your suggestions
 ## Built With
 
 * [Python](https://www.python.org/)

@@ -1,6 +1,6 @@
 {
-  "syncInterval": "10m",
   "log": "/tmp/gitlab-ldap-sync.log",
+  "log_level": "INFO",
   "gitlab": {
     "api": "",
     "private_token": "",

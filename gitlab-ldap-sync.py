@@ -6,6 +6,7 @@ import sys
 import json
 import ldap
 import ldap.asyncsearch
+import logging
 
 if __name__ == "__main__":
     print('Initializing gitlab-ldap-sync.')
@@ -14,13 +15,23 @@ if __name__ == "__main__":
         config = json.load(f)
     if config is not None:
         print('Done.')
-        print('Connecting to GitLab')
+        print('Updating logger configuration')
+        log_option = {
+            'format': '[%(asctime)s] [%(levelname)s] %(message)s'
+        }
+        if config['log']:
+            log_option['filename'] = config['log']
+        if config['log_level']:
+            log_option['level'] = getattr(logging, str(config['log_level']).upper())
+        logging.basicConfig(**log_option)
+        print('Done.')
+        logging.info('Connecting to GitLab')
         if config['gitlab']['api']:
             gl = None
             if not config['gitlab']['private_token'] and not config['gitlab']['oauth_token']:
-                print('You should set at least one auth information in config.json, aborting.')
+                logging.error('You should set at least one auth information in config.json, aborting.')
             elif config['gitlab']['private_token'] and config['gitlab']['oauth_token']:
-                print('You should set at most one auth information in config.json, aborting.')
+                logging.error('You should set at most one auth information in config.json, aborting.')
             else:
                 if config['gitlab']['private_token']:
                     gl = gitlab.Gitlab(url=config['gitlab']['api'], private_token=config['gitlab']['private_token'])
@@ -29,26 +40,26 @@ if __name__ == "__main__":
                 else:
                     gl = None
                 if gl is None:
-                    print('Cannot create gitlab object, aborting.')
+                    logging.error('Cannot create gitlab object, aborting.')
                     sys.exit(1)
             gl.auth()
-            print('Done.')
+            logging.info('Done.')
 
-            print('Connecting to LDAP')
+            logging.info('Connecting to LDAP')
             if not config['ldap']['url']:
-                print('You should configure LDAP in config.json')
+                logging.error('You should configure LDAP in config.json')
                 sys.exit(1)
 
             try:
                 l = ldap.initialize(uri=config['ldap']['url'])
                 l.simple_bind_s(config['ldap']['bind_dn'], config['ldap']['password'])
             except:
-                print('Error while connecting')
+                logging.error('Error while connecting')
                 sys.exit(1)
 
-            print('Done.')
+            logging.info('Done.')
 
-            print('Getting all groups from GitLab.')
+            logging.info('Getting all groups from GitLab.')
             gitlab_groups = []
             gitlab_groups_names = []
             for group in gl.groups.list(all=True):
@@ -64,14 +75,25 @@ if __name__ == "__main__":
                     })
                 gitlab_groups.append(gitlab_group)
 
-            print('Done.')
+            logging.info('Done.')
 
-            print('Getting all groups from LDAP.')
+            logging.info('Getting all groups from LDAP.')
             ldap_groups = []
             ldap_groups_names = []
+            if not config['ldap']['group_attribute'] and not config['ldap']['group_prefix']:
+                filterstr = '(objectClass=group)'
+            else:
+                if config['ldap']['group_attribute'] and config['ldap']['group_prefix']:
+                    logging.error('You should set "group_attribute" or "group_prefix" but not both in config.json')
+                    exit(1)
+                else:
+                    if config['ldap']['group_attribute']:
+                        filterstr = '(&(objectClass=group)(%s=gitlab_sync))' % config['ldap']['group_attribute']
+                    if config['ldap']['group_prefix']:
+                        filterstr = '(&(objectClass=group)(cn=%s*))' % config['ldap']['group_prefix']
             for group_dn, group_data in l.search_s(base=config['ldap']['groups_base_dn'],
                                                    scope=ldap.SCOPE_SUBTREE,
-                                                   filterstr='(objectClass=group)',
+                                                   filterstr=filterstr,
                                                    attrlist=['name', 'member']):
                 ldap_groups_names.append(group_data['name'][0].decode())
                 ldap_group = {"name": group_data['name'][0].decode(), "members": []}
@@ -81,7 +103,7 @@ if __name__ == "__main__":
                         for user_dn, user_data in l.search_s(base=config['ldap']['users_base_dn'],
                                                              scope=ldap.SCOPE_SUBTREE,
                                                              filterstr='(&(|(distinguishedName=%s)(dn=%s))(objectClass=user))' % (
-                                                             member, member),
+                                                                     member, member),
                                                              attrlist=['uid', 'sAMAccountName', 'mail', 'displayName']):
                             if 'sAMAccountName' in user_data:
                                 username = user_data['sAMAccountName'][0].decode()
@@ -94,26 +116,26 @@ if __name__ == "__main__":
                                 'email': user_data['mail'][0].decode()
                             })
                 ldap_groups.append(ldap_group)
-            print('Done.')
+            logging.info('Done.')
 
-            print('Groups currently in GitLab : %s' % str.join(', ', gitlab_groups_names))
-            print('Groups currently in LDAP : %s' % str.join(', ', ldap_groups_names))
+            logging.info('Groups currently in GitLab : %s' % str.join(', ', gitlab_groups_names))
+            logging.info('Groups currently in LDAP : %s' % str.join(', ', ldap_groups_names))
 
-            print('Syncing Groups from LDAP.')
+            logging.info('Syncing Groups from LDAP.')
 
             for l_group in ldap_groups:
-                print('Working on group %s ...' % l_group['name'])
+                logging.info('Working on group %s ...' % l_group['name'])
                 if l_group['name'] not in gitlab_groups_names:
-                    print('|- Group not existing in GitLab, creating.')
+                    logging.info('|- Group not existing in GitLab, creating.')
                     g = gl.groups.create({'name': l_group['name'], 'path': l_group['name']})
                     g.save()
                 else:
-                    print('|- Group already exist in GitLab, skiping creation.')
+                    logging.info('|- Group already exist in GitLab, skiping creation.')
 
-                print('|- Working on group\'s members.')
+                logging.info('|- Working on group\'s members.')
                 for l_member in l_group['members']:
                     if l_member not in gitlab_groups[gitlab_groups_names.index(l_group['name'])]['members']:
-                        print('|  |- User %s is member in LDAP but not in GitLab, updating GitLab.' % l_member['name'])
+                        logging.info('|  |- User %s is member in LDAP but not in GitLab, updating GitLab.' % l_member['name'])
                         g = gl.groups.list(search=l_group['name'])[0]
                         g.save()
                         u = gl.users.list(search=l_member['username'])
@@ -124,7 +146,7 @@ if __name__ == "__main__":
                             g.save()
                         else:
                             if config['gitlab']['create_user']:
-                                print('|  |- User %s does not exist in gitlab, creating.' % l_member['name'])
+                                logging.info('|  |- User %s does not exist in gitlab, creating.' % l_member['name'])
                                 try:
                                     u = gl.users.create({
                                         'email': l_member['email'],
@@ -147,38 +169,38 @@ if __name__ == "__main__":
                                 g.members.create({'user_id': u.id, 'access_level': gitlab.DEVELOPER_ACCESS})
                                 g.save()
                             else:
-                                print('|  |- User %s does not exist in gitlab, skipping.' % l_member['name'])
+                                logging.info('|  |- User %s does not exist in gitlab, skipping.' % l_member['name'])
                     else:
-                        print('|  |- User %s already in gitlab group, skipping.' % l_member['name'])
-                print('Done.')
+                        logging.info('|  |- User %s already in gitlab group, skipping.' % l_member['name'])
+                logging.info('Done.')
 
-            print('Done.')
+            logging.info('Done.')
 
-            print('Cleaning membership of LDAP Groups')
+            logging.info('Cleaning membership of LDAP Groups')
 
             for g_group in gitlab_groups:
-                print('Working on group %s ...' % g_group['name'])
+                logging.info('Working on group %s ...' % g_group['name'])
                 if g_group['name'] in ldap_groups_names:
-                    print('|- Working on group\'s members.')
+                    logging.info('|- Working on group\'s members.')
                     for g_member in g_group['members']:
                         if g_member not in ldap_groups[ldap_groups_names.index(g_group['name'])]['members']:
                             if str(config['ldap']['users_base_dn']).lower() not in g_member['identities']:
-                                print('|  |- Not a LDAP user, skipping.')
+                                logging.info('|  |- Not a LDAP user, skipping.')
                             else:
-                                print('|  |- User %s no longer in LDAP Group, removing.' % g_member['name'])
+                                logging.info('|  |- User %s no longer in LDAP Group, removing.' % g_member['name'])
                                 g = gl.groups.list(search=g_group['name'])[0]
                                 u = gl.users.list(search=g_member['username'])[0]
                                 if u is not None:
                                     g.members.delete(u.id)
                                     g.save()
                         else:
-                            print('|  |- User %s still in LDAP Group, skipping.' % g_member['name'])
-                    print('|- Done.')
+                            logging.info('|  |- User %s still in LDAP Group, skipping.' % g_member['name'])
+                    logging.info('|- Done.')
                 else:
-                    print('|- Not a LDAP group, skipping.')
-                print('Done')
+                    logging.info('|- Not a LDAP group, skipping.')
+                logging.info('Done')
         else:
-            print('GitLab API is empty, aborting.')
+            logging.error('GitLab API is empty, aborting.')
             sys.exit(1)
     else:
         print('Could not load config.json, check if the file is present.')
