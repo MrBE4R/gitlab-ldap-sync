@@ -85,7 +85,7 @@ if __name__ == "__main__":
             else:
                 if config['ldap']['group_attribute'] and config['ldap']['group_prefix']:
                     logging.error('You should set "group_attribute" or "group_prefix" but not both in config.json')
-                    exit(1)
+                    sys.exit(1)
                 else:
                     if config['ldap']['group_attribute']:
                         filterstr = '(&(objectClass=group)(%s=gitlab_sync))' % config['ldap']['group_attribute']
