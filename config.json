@@ -3,6 +3,7 @@
   "log_level": "INFO",
   "gitlab": {
     "api": "",
+    "ssl_verify": true,
     "private_token": "",
     "oauth_token": "",
     "ldap_provider":"",

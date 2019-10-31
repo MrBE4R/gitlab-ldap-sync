@@ -81,6 +81,7 @@ How to configure config.json
   "log_level": "INFO",                                // The log level
   "gitlab": {
     "api": "https://gitlab.example.com",              // Url of your GitLab 
+    "ssl_verify": true,                               // Verify SSL certificate when using HTTPs (true, false, path to own CA bundle)
     "private_token": "xxxxxxxxxxxxxxxxxxxx",          // Token generated in GitLab for an user with admin access
     "oauth_token": "",
     "ldap_provider":"",                               // Name of your LDAP provider in gitlab.yml

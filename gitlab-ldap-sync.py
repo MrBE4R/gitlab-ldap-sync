@@ -34,9 +34,9 @@ if __name__ == "__main__":
                 logging.error('You should set at most one auth information in config.json, aborting.')
             else:
                 if config['gitlab']['private_token']:
-                    gl = gitlab.Gitlab(url=config['gitlab']['api'], private_token=config['gitlab']['private_token'])
+                    gl = gitlab.Gitlab(url=config['gitlab']['api'], private_token=config['gitlab']['private_token'], ssl_verify=config['gitlab']['ssl_verify'])
                 elif config['gitlab']['oauth_token']:
-                    gl = gitlab.Gitlab(url=config['gitlab']['api'], oauth_token=config['gitlab']['oauth_token'])
+                    gl = gitlab.Gitlab(url=config['gitlab']['api'], oauth_token=config['gitlab']['oauth_token'], ssl_verify=config['gitlab']['ssl_verify'])
                 else:
                     gl = None
                 if gl is None:
