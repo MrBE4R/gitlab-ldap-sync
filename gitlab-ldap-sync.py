@@ -8,14 +8,23 @@ import ldap
 import ldap.asyncsearch
 import logging
 
+CRON = False
+
+def logstdout(s):
+    if not CRON:
+        print(s)
+
 if __name__ == "__main__":
-    print('Initializing gitlab-ldap-sync.')
     config = None
     with open('config.json') as f:
         config = json.load(f)
+    if config is None:
+        logstdout('Initializing gitlab-ldap-sync failed.')
     if config is not None:
-        print('Done.')
-        print('Updating logger configuration')
+        logstdout('Initializing gitlab-ldap-sync successfull.')
+        if config['cron']:
+            CRON = True
+        logstdout('Updating logger configuration')
         log_option = {
             'format': '[%(asctime)s] [%(levelname)s] %(message)s'
         }
@@ -24,7 +33,11 @@ if __name__ == "__main__":
         if config['log_level']:
             log_option['level'] = getattr(logging, str(config['log_level']).upper())
         logging.basicConfig(**log_option)
-        print('Done.')
+        if config['cron'] and config['log']:
+            console = logging.StreamHandler()
+            console.setLevel(logging.ERROR)
+            logging.getLogger('').addHandler(console)
+        logstdout('Done.')
         logging.info('Connecting to GitLab')
         if config['gitlab']['api']:
             gl = None

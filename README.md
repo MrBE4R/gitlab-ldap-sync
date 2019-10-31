@@ -79,6 +79,7 @@ How to configure config.json
 {
   "log": "/tmp/gitlab-ldap-sync.log",                 // Where to store the log file. If not set, will log to stdout
   "log_level": "INFO",                                // The log level
+  "cron": false,                                      // Should the script run as cronjob suppressing any output to stdout
   "gitlab": {
     "api": "https://gitlab.example.com",              // Url of your GitLab 
     "private_token": "xxxxxxxxxxxxxxxxxxxx",          // Token generated in GitLab for an user with admin access
