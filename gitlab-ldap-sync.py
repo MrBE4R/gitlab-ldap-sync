@@ -148,7 +148,7 @@ if __name__ == "__main__":
                 for l_member in l_group['members']:
                     if l_member not in gitlab_groups[gitlab_groups_names.index(l_group['name'])]['members']:
                         logging.info('|  |- User %s is member in LDAP but not in GitLab, updating GitLab.' % l_member['name'])
-                        g = gl.groups.list(search=l_group['name'])[0]
+                        g = [group for group in gl.groups.list(search=l_group['name']) if group.name == l_group['name']][0]
                         g.save()
                         u = gl.users.list(search=l_member['username'])
                         if len(u) > 0:
@@ -200,7 +200,7 @@ if __name__ == "__main__":
                                 logging.info('|  |- Not a LDAP user, skipping.')
                             else:
                                 logging.info('|  |- User %s no longer in LDAP Group, removing.' % g_member['name'])
-                                g = gl.groups.list(search=g_group['name'])[0]
+                                g = [group for group in gl.groups.list(search=g_group['name']) if group.name == g_group['name']][0]
                                 u = gl.users.list(search=g_member['username'])[0]
                                 if u is not None:
                                     g.members.delete(u.id)
