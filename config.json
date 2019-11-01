@@ -15,6 +15,7 @@
     "url": "",
     "users_base_dn": "",
     "groups_base_dn": "",
+    "user_filter": "",
     "bind_dn": "",
     "password": "",
     "group_attribute": "",

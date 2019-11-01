@@ -109,8 +109,8 @@ if __name__ == "__main__":
                         member = member.decode()
                         for user_dn, user_data in l.search_s(base=config['ldap']['users_base_dn'],
                                                              scope=ldap.SCOPE_SUBTREE,
-                                                             filterstr='(&(|(distinguishedName=%s)(dn=%s))(objectClass=user))' % (
-                                                                     member, member),
+                                                             filterstr='(&(|(distinguishedName=%s)(dn=%s))(objectClass=user)%s)' % (
+                                                                     member, member, config['ldap']['user_filter']),
                                                              attrlist=['uid', 'sAMAccountName', 'mail', 'displayName']):
                             if 'sAMAccountName' in user_data:
                                 username = user_data['sAMAccountName'][0].decode()

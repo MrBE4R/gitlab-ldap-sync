@@ -93,6 +93,7 @@ How to configure config.json
     "url": "ldaps://ldap.loc",                        // URL to your ldap / active directory
     "users_base_dn": "ou=users,dc=example,dc=com",    // Where we should look for users
     "groups_base_dn": "ou=groupss,dc=example,dc=com", // Where we should look for groups
+    "user_filter": "(memberOf=CN=GitUsers)",          // What filter we should use on user selection
     "bind_dn": "login",                               // User to log with
     "password": "password",                           // Password of the user
     "group_attribute": "",                            // The attribute to search in LDAP. The value must be gitlab_sync
