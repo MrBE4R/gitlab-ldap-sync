@@ -6,7 +6,9 @@
     "private_token": "",
     "oauth_token": "",
     "ldap_provider":"",
-    "create_user": true
+    "create_user": true,
+    "group_visibility": "private",
+    "add_description": true
   },
   "ldap": {
     "url": "",

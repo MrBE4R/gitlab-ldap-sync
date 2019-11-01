@@ -16,6 +16,8 @@ if __name__ == "__main__":
     if config is not None:
         print('Done.')
         print('Updating logger configuration')
+        if not config['gitlab']['group_visibility']:
+            config['gitlab']['group_visibility'] = 'private'
         log_option = {
             'format': '[%(asctime)s] [%(levelname)s] %(message)s'
         }
@@ -91,12 +93,17 @@ if __name__ == "__main__":
                         filterstr = '(&(objectClass=group)(%s=gitlab_sync))' % config['ldap']['group_attribute']
                     if config['ldap']['group_prefix']:
                         filterstr = '(&(objectClass=group)(cn=%s*))' % config['ldap']['group_prefix']
+            attrlist=['name', 'member']
+            if config['gitlab']['add_description']:
+                attrlist.append('description')
             for group_dn, group_data in l.search_s(base=config['ldap']['groups_base_dn'],
                                                    scope=ldap.SCOPE_SUBTREE,
                                                    filterstr=filterstr,
-                                                   attrlist=['name', 'member']):
+                                                   attrlist=attrlist):
                 ldap_groups_names.append(group_data['name'][0].decode())
                 ldap_group = {"name": group_data['name'][0].decode(), "members": []}
+                if config['gitlab']['add_description'] and 'description' in group_data:
+                    ldap_group.update({"description": group_data['description'][0].decode()})
                 if 'member' in group_data:
                     for member in group_data['member']:
                         member = member.decode()
@@ -127,8 +134,13 @@ if __name__ == "__main__":
                 logging.info('Working on group %s ...' % l_group['name'])
                 if l_group['name'] not in gitlab_groups_names:
                     logging.info('|- Group not existing in GitLab, creating.')
-                    g = gl.groups.create({'name': l_group['name'], 'path': l_group['name']})
+                    gitlab_group = {'name': l_group['name'], 'path': l_group['name'], 'visibility': config['gitlab']['group_visibility']}
+                    if config['gitlab']['add_description'] and 'description' in l_group:
+                        gitlab_group.update({'description': l_group['description']})
+                    g = gl.groups.create(gitlab_group)
                     g.save()
+                    gitlab_groups.append({'members': [], 'name': l_group['name']})
+                    gitlab_groups_names.append(l_group['name'])
                 else:
                     logging.info('|- Group already exist in GitLab, skiping creation.')
 

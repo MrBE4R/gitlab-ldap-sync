@@ -84,7 +84,9 @@ How to configure config.json
     "private_token": "xxxxxxxxxxxxxxxxxxxx",          // Token generated in GitLab for an user with admin access
     "oauth_token": "",
     "ldap_provider":"",                               // Name of your LDAP provider in gitlab.yml
-    "create_user": true                               // Should the script create the user in GitLab
+    "create_user": true,                              // Should the script create the user in GitLab
+    "group_visibility": "private",                    // Set visibility level of new group (private, internal, public)
+    "add_description": true                           // Add description from your LDAP as group description
   },
   "ldap": {
     "url": "ldaps://ldap.loc",                        // URL to your ldap / active directory
