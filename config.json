@@ -4,15 +4,19 @@
   "cron": false,
   "gitlab": {
     "api": "",
+    "ssl_verify": true,
     "private_token": "",
     "oauth_token": "",
     "ldap_provider":"",
-    "create_user": true
+    "create_user": true,
+    "group_visibility": "private",
+    "add_description": true
   },
   "ldap": {
     "url": "",
     "users_base_dn": "",
     "groups_base_dn": "",
+    "user_filter": "",
     "bind_dn": "",
     "password": "",
     "group_attribute": "",

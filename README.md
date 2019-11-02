@@ -82,15 +82,19 @@ How to configure config.json
   "cron": false,                                      // Should the script run as cronjob suppressing any output to stdout
   "gitlab": {
     "api": "https://gitlab.example.com",              // Url of your GitLab 
+    "ssl_verify": true,                               // Verify SSL certificate when using HTTPs (true, false, path to own CA bundle)
     "private_token": "xxxxxxxxxxxxxxxxxxxx",          // Token generated in GitLab for an user with admin access
     "oauth_token": "",
     "ldap_provider":"",                               // Name of your LDAP provider in gitlab.yml
-    "create_user": true                               // Should the script create the user in GitLab
+    "create_user": true,                              // Should the script create the user in GitLab
+    "group_visibility": "private",                    // Set visibility level of new group (private, internal, public)
+    "add_description": true                           // Add description from your LDAP as group description
   },
   "ldap": {
     "url": "ldaps://ldap.loc",                        // URL to your ldap / active directory
     "users_base_dn": "ou=users,dc=example,dc=com",    // Where we should look for users
     "groups_base_dn": "ou=groupss,dc=example,dc=com", // Where we should look for groups
+    "user_filter": "(memberOf=CN=GitUsers)",          // What filter we should use on user selection
     "bind_dn": "login",                               // User to log with
     "password": "password",                           // Password of the user
     "group_attribute": "",                            // The attribute to search in LDAP. The value must be gitlab_sync
@@ -121,6 +125,7 @@ Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c6
 ## Authors
 
 * **Jean-François GUILLAUME (Jeff MrBear)** - *Initial work* - [MrBE4R](https://github.com/MrBE4R)
+* **Marcel Pennewiß** - Various improvements - [mape2k](https://github.com/mape2k)
 
 See also the list of [contributors](https://github.com/MrBE4R/gitlab-ldap-sync/contributors) who participated in this project.
 
