@@ -17,7 +17,7 @@ This project has been tested on CentOS 7.6 with GitLab 11.5.* and OpenLDAP and A
 Python        : 3.4.9
 pip3          : 8.1.2
 python-gitlab : 1.6.0
-python-ldap   : 3.1.0
+python-ldap   : 3.4.0
 ```
 
 ### Installing
