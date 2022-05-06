@@ -137,10 +137,15 @@ if __name__ == "__main__":
                     gitlab_group = {'name': l_group['name'], 'path': l_group['name'], 'visibility': config['gitlab']['group_visibility']}
                     if config['gitlab']['add_description'] and 'description' in l_group:
                         gitlab_group.update({'description': l_group['description']})
-                    g = gl.groups.create(gitlab_group)
-                    g.save()
-                    gitlab_groups.append({'members': [], 'name': l_group['name']})
-                    gitlab_groups_names.append(l_group['name'])
+                    try:
+                        g = gl.groups.create(gitlab_group)
+                        g.save()
+                        gitlab_groups.append({'members': [], 'name': l_group['name']})
+                        gitlab_groups_names.append(l_group['name'])
+                    except Exception as e:
+                        logging.error('Creating group %s failed: %s' % (l_group['name'], e))
+                        # Skip next steps due to group could not be created
+                        continue
                 else:
                     logging.info('|- Group already exist in GitLab, skiping creation.')
 
