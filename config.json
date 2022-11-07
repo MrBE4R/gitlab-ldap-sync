@@ -1,6 +1,7 @@
 {
   "log": "/tmp/gitlab-ldap-sync.log",
   "log_level": "INFO",
+  "cron": false,
   "gitlab": {
     "api": "",
     "ssl_verify": true,
