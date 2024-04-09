@@ -155,7 +155,7 @@ if __name__ == "__main__":
                         logging.info('|  |- User %s is member in LDAP but not in GitLab, updating GitLab.' % l_member['name'])
                         g = [group for group in gl.groups.list(search=l_group['name']) if group.name == l_group['name']][0]
                         g.save()
-                        u = gl.users.list(search=l_member['username'])
+                        u = gl.users.list(username=l_member['username'])
                         if len(u) > 0:
                             u = u[0]
                             if u not in g.members.list(all=True):
@@ -206,7 +206,7 @@ if __name__ == "__main__":
                             else:
                                 logging.info('|  |- User %s no longer in LDAP Group, removing.' % g_member['name'])
                                 g = [group for group in gl.groups.list(search=g_group['name']) if group.name == g_group['name']][0]
-                                u = gl.users.list(search=g_member['username'])[0]
+                                u = gl.users.list(username=g_member['username'])[0]
                                 if u is not None:
                                     g.members.delete(u.id)
                                     g.save()
