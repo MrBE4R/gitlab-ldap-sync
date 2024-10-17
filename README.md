@@ -38,10 +38,15 @@ pip3 install -r ./gitlab-ldap-sync/requirements.txt
 ```bash
 EDITOR ./gitlab-ldap-sync/config.json
 ```
-* Start the script and enjoy your sync users and groups being synced
+* Start the script and enjoy your sync users and groups being synced 1 for 1
 ```bash
 cd ./gitlab-ldap-sync && ./gitlab-ldap-sync.py
 ```
+OR sync users with permissions defined in LDAP groups (NO groups are created in GitLab!)
+```bash
+cd ./gitlab-ldap-sync && ./gitlab-ldap-sync_perms_groups.py
+```
+
 
 You should get something like this :
 ```bash
@@ -99,6 +104,14 @@ How to configure config.json
     "group_attribute": "",                            // The attribute to search in LDAP. The value must be gitlab_sync
     "group_prefix": ""                                // The prefix of the groups that should be synced
   }
+  "sync": {
+    "matrix" : [                                      // Matrix used to define which users in LDAP groups (source)
+      [ "LDAPGroup1", "GitLabGroup", "GUEST"],        // will be granted access to specific GitLab groups (destination)
+      [ "LDAPGroup2", "GitLabGroup", "DEVELOPER"],    // with the indicated Access Level
+      [ "LDAPGroup3", "GitLabGroup", "MAINTAINER"],   // Only used by gitlab-ldap-sync_perms_groups.py script
+      [ "LDAPGroup3", "GitLabGroup2", "MAINTAINER"]
+    ]
+  } 
 }
 ```
 You should use ```private_token``` or ```oauth_token``` but not both. Check [the gitlab documentation](https://docs.gitlab.com/ce/user/profile/personal_access_tokens.html#creating-a-personal-access-token) for how to generate the personal access token.
@@ -125,6 +138,7 @@ Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c6
 
 * **Jean-François GUILLAUME (Jeff MrBear)** - *Initial work* - [MrBE4R](https://github.com/MrBE4R)
 * **Marcel Pennewiß** - Various improvements - [mape2k](https://github.com/mape2k)
+* **Nicolas Roux** - Various improvements - [p4r4d0x86](https://github.com/p4r4d0x86) / [rouxn-bsi](https://github.com/rouxn-bsi)
 
 See also the list of [contributors](https://github.com/MrBE4R/gitlab-ldap-sync/contributors) who participated in this project.
 

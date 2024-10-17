@@ -20,5 +20,13 @@
     "password": "",
     "group_attribute": "",
     "group_prefix": ""
-  }
+  },
+  "sync": {
+    "matrix" : [
+      [ "LDAPGroup1", "GitLabGroup", "GUEST"],
+      [ "LDAPGroup2", "GitLabGroup", "DEVELOPER"],
+      [ "LDAPGroup3", "GitLabGroup", "MAINTAINER"],
+      [ "LDAPGroup3", "GitLabGroup2", "MAINTAINER"]
+    ]
+  } 
 }

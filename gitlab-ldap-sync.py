@@ -69,12 +69,16 @@ if __name__ == "__main__":
                 gitlab_group = {"name": group.full_name, "members": []}
                 for member in group.members.list(all=True):
                     user = gl.users.get(member.id)
-                    gitlab_group['members'].append({
-                        'username': user.username,
-                        'name': user.name,
-                        'identities': user.identities[0]['extern_uid'],
-                        'email': user.email
-                    })
+                    if user.identities and len(user.identities) > 0 and 'extern_uid' in user.identities[0]:
+                        gitlab_group['members'].append({
+                           'username': user.username,
+                           'name': user.name,
+                           'identities': user.identities[0]['extern_uid'],
+                           'email': user.email
+                        })
+                        logging.debug("User {user.username} does have a valid 'extern_uid' in identities.")
+                    else:
+                        logging.debug("User {user.username} does not have a valid 'extern_uid' in identities.")
                 gitlab_groups.append(gitlab_group)
 
             logging.info('Done.')
@@ -92,33 +96,32 @@ if __name__ == "__main__":
                     if config['ldap']['group_attribute']:
                         filterstr = '(&(objectClass=group)(%s=gitlab_sync))' % config['ldap']['group_attribute']
                     if config['ldap']['group_prefix']:
-                        filterstr = '(&(objectClass=group)(cn=%s*))' % config['ldap']['group_prefix']
-            attrlist=['name', 'member']
+                        filterstr = '(&(objectClass=%s)(cn=%s*))' % (config['ldap']['group_ObjectClass'], config['ldap']['group_prefix'])
+            attrlist=[config['ldap']['group_AttributeForName'], 'member']
             if config['gitlab']['add_description']:
                 attrlist.append('description')
             for group_dn, group_data in l.search_s(base=config['ldap']['groups_base_dn'],
                                                    scope=ldap.SCOPE_SUBTREE,
                                                    filterstr=filterstr,
                                                    attrlist=attrlist):
-                ldap_groups_names.append(group_data['name'][0].decode())
-                ldap_group = {"name": group_data['name'][0].decode(), "members": []}
+                ldap_groups_names.append(group_data[config['ldap']['group_AttributeForName']][0].decode())
+                ldap_group = {"name": group_data[config['ldap']['group_AttributeForName']][0].decode(), "members": []}
                 if config['gitlab']['add_description'] and 'description' in group_data:
                     ldap_group.update({"description": group_data['description'][0].decode()})
                 if 'member' in group_data:
                     for member in group_data['member']:
                         member = member.decode()
-                        for user_dn, user_data in l.search_s(base=config['ldap']['users_base_dn'],
-                                                             scope=ldap.SCOPE_SUBTREE,
-                                                             filterstr='(&(|(distinguishedName=%s)(dn=%s))(objectClass=user)%s)' % (
-                                                                     member, member, config['ldap']['user_filter']),
-                                                             attrlist=['uid', 'sAMAccountName', 'mail', 'displayName']):
+                        for user_dn, user_data in l.search_s(base=member,
+                                                             scope=ldap.SCOPE_BASE,
+                                                             filterstr='(objectClass=*)',
+                                                             attrlist=['uid', 'mail', 'cn']):
                             if 'sAMAccountName' in user_data:
                                 username = user_data['sAMAccountName'][0].decode()
                             else:
                                 username = user_data['uid'][0].decode()
                             ldap_group['members'].append({
                                 'username': username,
-                                'name': user_data['displayName'][0].decode(),
+                                'name': user_data[config['ldap']['user_AttributeForName']][0].decode(),
                                 'identities': str(member).lower(),
                                 'email': user_data['mail'][0].decode()
                             })
@@ -159,7 +162,7 @@ if __name__ == "__main__":
                         if len(u) > 0:
                             u = u[0]
                             if u not in g.members.list(all=True):
-                                g.members.create({'user_id': u.id, 'access_level': gitlab.DEVELOPER_ACCESS})
+                                g.members.create({'user_id': u.id, 'access_level': gitlab.const.DEVELOPER_ACCESS})
                             g.save()
                         else:
                             if config['gitlab']['create_user']:
@@ -183,7 +186,7 @@ if __name__ == "__main__":
                                             'provider': config['gitlab']['ldap_provider'],
                                             'password': 'pouetpouet'
                                         })
-                                g.members.create({'user_id': u.id, 'access_level': gitlab.DEVELOPER_ACCESS})
+                                g.members.create({'user_id': u.id, 'access_level': gitlab.const.DEVELOPER_ACCESS})
                                 g.save()
                             else:
                                 logging.info('|  |- User %s does not exist in gitlab, skipping.' % l_member['name'])
@@ -223,3 +226,4 @@ if __name__ == "__main__":
         print('Could not load config.json, check if the file is present.')
         print('Aborting.')
         sys.exit(1)
+
